@@ -1,50 +1,42 @@
-name: Production Commercial CI
+name: Yocto CI Build
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
 
 jobs:
-  build-production-bsp:
+  build:
     runs-on: ubuntu-22.04
     container:
-      image: ghcr.io/siemens/kas/kas:latest
+      image: crops/poky:scarthgap
+      options: --user root
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Shared Caching Directories
+      - name: Set up git safe directory
         run: |
-          mkdir -p /workdir/sstate-cache
-          mkdir -p /workdir/downloads
+          git config --global --add safe.directory /__w/my-rpi4-yocto-os/my-rpi4-yocto-os
 
-      - name: Restore Yocto Caches
-        uses: actions/cache@v3
-        with:
-          path: |
-            /workdir/sstate-cache
-            /workdir/downloads
-          key: yocto-commercial-cache-${{ hashFiles('kas.yml') }}
-          restore-keys: |
-            yocto-commercial-cache-
-
-      - name: Execute Strict Metadata Parse & Layer Validation
+      - name: Validate Kas configuration and show recipes
         run: |
-          kas shell kas.yml -c "bitbake -p"
-          kas shell kas.yml -c "bitbake-layers show-layers"
+          kas shell kas.yml -c "bitbake-layers show-recipes"
 
-      - name: Run Full Production Build (Image & SDK)
+      - name: Build MyPhone Image
         run: |
           kas build kas.yml
 
-      - name: Archive Production Artifacts and SDK
+      - name: Build SDK
+        run: |
+          kas shell kas.yml -c "bitbake myphone-image -c populate_sdk"
+
+      - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: commercial-bsp-release-bundle
+          name: myphone-image-artifacts
           path: |
-            build/tmp/deploy/images/raspberrypi4/**/*.wic*
-            build/tmp/deploy/images/raspberrypi4/**/*.sdimg*
-            build/tmp/deploy/images/raspberrypi4/**/*.bmap
-            build/tmp/deploy/images/raspberrypi4/**/*.manifest
-            build/sdk/*.sh
+            build/tmp/deploy/images/raspberrypi4/myphone-image-raspberrypi4.wic.bz2
+            build/tmp/deploy/sdk/*.sh
