@@ -1,0 +1,66 @@
+header:
+  version: 11
+
+machine: raspberrypi4
+distro: poky
+target:
+  - myphone-image
+
+repos:
+  poky:
+    url: https://git.yoctoproject.org/git/poky
+    refspec: refs/tags/kirkstone-4.0.20
+    commit: d92fa6277d0137782b5443029f62788e0281b37b
+    layers:
+      meta:
+      meta-poky
+      meta-yocto-bsp
+
+  meta-raspberrypi:
+    url: https://git.yoctoproject.org/git/meta-raspberrypi
+    refspec: refs/tags/11.0.1
+    commit: 1d5e3cf75fca99557b494632863b123497d39a1a
+
+  meta-openembedded:
+    url: https://github.com/openembedded/meta-openembedded.git
+    refspec: refs/heads/kirkstone
+    commit: 149e3962657e3c153831889ab8c1875c7e14bc00
+    layers:
+      meta-oe:
+      meta-python:
+      meta-multimedia:
+      meta-networking:
+
+  meta-qt6:
+    url: https://github.com/meta-qt6/meta-qt6.git
+    refspec: refs/heads/6.5
+    commit: 47781b2a92c423dff288820c7cc379aa685e13d9
+
+  meta-myphone-bsp:
+    path: layers/meta-myphone-bsp
+  meta-myphone-ui:
+    path: layers/meta-myphone-ui
+  meta-myphone-apps:
+    path: layers/meta-myphone-apps
+  meta-myphone-security:
+    path: layers/meta-myphone-security
+  meta-myphone:
+    path: layers/meta-myphone
+
+local_conf_header:
+  standard: |
+    CONF_VERSION = "2"
+    DL_DIR ?= "/workdir/downloads"
+    SSTATE_DIR ?= "/workdir/sstate-cache"
+    LICENSE_FLAGS_ACCEPTED = "commercial"
+    INIT_MANAGER = "systemd"
+    DISTRO_FEATURES:append = " wayland pam opengl wifi bluetooth alsa security"
+    DISTRO_FEATURES:remove = " x11"
+    
+    RPI_EXTRA_CONFIG = " \
+        dtparam=audio=on \
+        dtparam=spi=on \
+        dtoverlay=ads7846,cs=1,penirq=26,penirq_pull=2,speed=2000000,keep_vref_on=1,swapxy=1,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900 \
+    "
+    BB_NUMBER_THREADS = "4"
+    PARALLEL_MAKE = "-j 4"
