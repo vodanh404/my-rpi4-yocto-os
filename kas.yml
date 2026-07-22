@@ -1,76 +1,75 @@
 header:
   version: 14
 
-machine: raspberrypi4
+machine: raspberrypi4-64
 distro: poky
+target: myphone-image
 
 repos:
   poky:
     url: https://git.yoctoproject.org/poky
-    refspec: scarthgap
+    branch: scarthgap
+
     layers:
       meta:
       meta-poky:
       meta-yocto-bsp:
 
-  meta-raspberrypi:
-    url: https://git.yoctoproject.org/meta-raspberrypi
-    refspec: scarthgap
-
   meta-openembedded:
-    url: https://github.com/openembedded/meta-openembedded.git
-    refspec: scarthgap
+    url: https://git.openembedded.org/meta-openembedded
+    branch: scarthgap
     layers:
       meta-oe:
-      meta-networking:
       meta-python:
-      meta-filesystems:
+      meta-networking:
       meta-multimedia:
 
   meta-qt6:
-    url: https://github.com/meta-qt6/meta-qt6.git
-    refspec: scarthgap
+    url: https://code.qt.io/yocto/meta-qt6.git
+    branch: 6.8
 
-  # Custom MyPhone Layers
+  meta-raspberrypi:
+    url: https://git.yoctoproject.org/meta-raspberrypi
+    branch: scarthgap
+
   meta-myphone:
-    path: layers/meta-myphone
+    path: meta-myphone
 
   meta-myphone-bsp:
-    path: layers/meta-myphone-bsp
+    path: meta-myphone-bsp
 
   meta-myphone-ui:
-    path: layers/meta-myphone-ui
+    path: meta-myphone-ui
 
   meta-myphone-apps:
-    path: layers/meta-myphone-apps
+    path: meta-myphone-apps
 
   meta-myphone-security:
-    path: layers/meta-myphone-security
+    path: meta-myphone-security
 
   meta-myphone-update:
-    path: layers/meta-myphone-update
-
-bblayers_conf_header: |
-  POKY_BBLAYERS_CONF_VERSION = "2"
-  BBPATH = "${TOPDIR}"
-  BBFILES ?= ""
+    path: meta-myphone-update
 
 local_conf_header:
-  standard: |
-    CONF_VERSION = "2"
-    PACKAGE_CLASSES = "package_ipk"
-    EXTRA_IMAGE_FEATURES ?= "debug-tweaks package-management"
-    USER_CLASSES ?= "buildstats"
-    PATCHRESOLVE = "noop"
-    
-    # Disk space monitoring configuration
-    BB_DISKMON_DIRS ??= "\
-        STOPTASKS,${DL_DIR},1G,100K \
-        STOPTASKS,${SSTATE_DIR},1G,100K \
-        ABORT,${DL_DIR},100M,1K \
-        ABORT,${SSTATE_DIR},100M,1K"
-        
-    # Enable systemd as init manager
-    DISTRO_FEATURES:append = " systemd"
+
+  myphone: |
+
+    PACKAGE_CLASSES = "package_rpm"
+
+    EXTRA_IMAGE_FEATURES += "ssh-server-openssh"
+
+    LICENSE_FLAGS_ACCEPTED = "commercial"
+
+    DISTRO_FEATURES:append = " wayland opengl systemd"
+
     VIRTUAL-RUNTIME_init_manager = "systemd"
-    VIRTUAL-RUNTIME_initscripts = "systemd-compat-units"
+
+    ENABLE_UART = "1"
+
+    GPU_MEM = "128"
+
+    IMAGE_FSTYPES += "wic.bz2 wic.xz"
+
+bblayers_conf_header:
+
+  myphone: |
